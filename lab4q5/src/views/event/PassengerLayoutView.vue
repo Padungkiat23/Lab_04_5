@@ -54,7 +54,7 @@ export default {
 <style scoped>
 #nav a {
   flex: 1;
-  color: #1a7a2f;
+  color: #514bc3;
   text-decoration: underline;
 }
 </style>
