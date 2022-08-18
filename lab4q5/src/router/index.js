@@ -5,6 +5,9 @@ import PassengerDetailView from '../views/event/PassengerDetailView.vue'
 import PassengerLayoutView from '../views/event/PassengerLayoutView.vue'
 import AirLineDetailView from '../views/event/AirLineDetailView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import NProgress from 'nprogress'
+import EventService from '@/service/EventService.js'
+import GStore from '@/store'
 const routes = [
   {
     path: '/',
@@ -25,15 +28,50 @@ const routes = [
     name: 'PassengerLayout',
     props: true,
     component: PassengerLayoutView,
+    beforeEnter: (to) => {
+      return (
+        EventService.getPassenger(to.params.id)
+          .then((response) => {
+            //Still need to set the data here
+            GStore.passenger = response.data
+          })
+          .catch((error) => {
+            if (error.response && error.response.status == 404) {
+              return {
+                name: '404Resource',
+                params: { resource: 'passenger' }
+              }
+            } else {
+              return { name: 'NetworkError' }
+            }
+          }),
+        EventService.getAirLine(to.params.id) //Return and params.id
+          .then((response) => {
+            //Still need to set the data here
+            GStore.airline = response.data
+          })
+          .catch((error) => {
+            if (error.response && error.response.status == 404) {
+              return {
+                name: '404Resource',
+                params: { resource: 'airline' }
+              }
+            } else {
+              return { name: 'NetworkError' }
+            }
+          })
+      )
+    },
+
     children: [
       {
-        path: 'passenger',
+        path: 'passenger/:id',
         name: 'PassengerDetailView',
         component: PassengerDetailView,
         props: true
       },
       {
-        path: 'airline',
+        path: 'airline/:id',
         name: 'AirLineDetailView',
         component: AirLineDetailView,
         props: true
@@ -55,7 +93,20 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  }
+})
+router.beforeEach(() => {
+  NProgress.start()
+})
+router.afterEach(() => {
+  NProgress.done()
 })
 
 export default router
